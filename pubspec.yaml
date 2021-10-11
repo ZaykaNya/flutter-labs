@@ -52,7 +52,7 @@ dev_dependencies:
 # The following section is specific to Flutter.
 flutter:
   assets:
-    - assets/images/ApexLegends.jpg
+    - assets/images/ApexLegends.png
     - assets/images/Dota2.jpg
     - assets/images/Fortnite.jpg
 

@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
         '': (context) => const MyHomePage(title: ''),
         '/game': (context) => const GamePage(
               tag: 'game',
-              imagePath: '../images/Dota2',
+              imagePath: 'images/Dota2',
             ),
       },
       theme: ThemeData(
@@ -292,15 +292,15 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   GameBar(
                       title: 'Apex Legends',
                       viewers: '81.6 тыс',
-                      imagePath: "../assets/images/ApexLegends.jpg"),
+                      imagePath: "assets/images/ApexLegends.png"),
                   GameBar(
                       title: 'Fortnite',
                       viewers: '100.5 тыс',
-                      imagePath: "../assets/images/Fortnite.jpg"),
+                      imagePath: "assets/images/Fortnite.jpg"),
                   GameBar(
                       title: 'Dota 2',
                       viewers: '514.3 тыс',
-                      imagePath: "../assets/images/Dota2.jpg"),
+                      imagePath: "assets/images/Dota2.jpg"),
                 ],
               ),
               Row(
@@ -400,7 +400,7 @@ class Broadcast extends StatelessWidget {
               height: 55,
               decoration: const BoxDecoration(
                   image: DecorationImage(
-                image: AssetImage("../assets/images/Dota2.jpg"),
+                image: AssetImage("assets/images/Dota2.jpg"),
                 fit: BoxFit.cover,
               )),
             ),
@@ -414,7 +414,7 @@ class Broadcast extends StatelessWidget {
                       children: const [
                         CircleAvatar(
                           radius: 8,
-                          backgroundImage: AssetImage("../assets/images/Dota2.jpg"),
+                          backgroundImage: AssetImage("assets/images/Dota2.jpg"),
                         ),
                         Padding(
                           padding: EdgeInsets.fromLTRB(4, 0, 0, 0),
