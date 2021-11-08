@@ -2,9 +2,29 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
+import 'package:provider/provider.dart';
+
+class DrawerModel extends ChangeNotifier {
+  final _broadcasts = [];
+
+  void add(item) {
+    _broadcasts.add(item);
+    notifyListeners();
+  }
+
+  void removeAll() {
+    _broadcasts.clear();
+    notifyListeners();
+  }
+}
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => DrawerModel(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -35,6 +55,7 @@ class MyApp extends StatelessWidget {
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
         primarySwatch: Colors.blue,
+        canvasColor: Colors.black,
       ),
     );
   }
@@ -98,11 +119,18 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   int _currentIndex = 0;
+  int _globalCounter = 0;
 
   final _inactiveColor = Colors.grey;
 
   late ScrollController _scrollController;
   bool _showBackToTopButton = false;
+
+  void setGlobalCounter() {
+    setState(() {
+      _globalCounter++;
+    });
+  }
 
   @override
   void initState() {
@@ -183,22 +211,23 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: Colors.black,
       drawer: Drawer(
-        backgroundColor: Colors.black,
         child: ListView(
           padding: EdgeInsets.zero,
-          children: const [
+          children: [
             DrawerHeader(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.black,
               ),
-              child: Text('TI-81 Andrii Demchyshyn', style: TextStyle(color: Colors.white)),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('TI-81 Andrii Demchyshyn', style: TextStyle(color: Colors.white)),
+                  Text('Global Counter: $_globalCounter', style: const TextStyle(color: Colors.white)),
+                ],
+              ),
             ),
-            ListTile(
-              title: Text('Item 1', style: TextStyle(color: Colors.white)),
-            ),
-            ListTile(
-              title: Text('Item 2', style: TextStyle(color: Colors.white)),
-            ),
+            ListOfBroadcasts(setGlobalCounter: setGlobalCounter),
+            const MyButton(),
           ],
         ),
       ),
@@ -315,11 +344,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                           ))))
                 ],
               ),
-              const Broadcast(),
-              const Broadcast(),
-              const Broadcast(),
-              const Broadcast(),
-              const Broadcast(),
+              Broadcast(setGlobalCounter: setGlobalCounter),
+              Broadcast(setGlobalCounter: setGlobalCounter),
+              Broadcast(setGlobalCounter: setGlobalCounter),
+              Broadcast(setGlobalCounter: setGlobalCounter),
+              Broadcast(setGlobalCounter: setGlobalCounter),
               Row(
                 children: const <Widget>[
                   Padding(
@@ -332,11 +361,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                           ))))
                 ],
               ),
-              const Broadcast(),
-              const Broadcast(),
-              const Broadcast(),
-              const Broadcast(),
-              const Broadcast(),
+              Broadcast(setGlobalCounter: setGlobalCounter),
+              Broadcast(setGlobalCounter: setGlobalCounter),
+              Broadcast(setGlobalCounter: setGlobalCounter),
+              Broadcast(setGlobalCounter: setGlobalCounter),
+              Broadcast(setGlobalCounter: setGlobalCounter),
             ],
           ),
         ),
@@ -382,12 +411,18 @@ class NavButton extends StatelessWidget {
 }
 
 class Broadcast extends StatelessWidget {
+  final bool isButton;
+  final VoidCallback setGlobalCounter;
+
   const Broadcast({
     Key? key,
+    this.isButton = true,
+    required this.setGlobalCounter
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final drawerModel = context.watch<DrawerModel>();
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
@@ -485,6 +520,46 @@ class Broadcast extends StatelessWidget {
                     ),
                   ],
                 )),
+            if (isButton) Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                TextButton(
+                  onPressed: () => {
+                    Provider.of<DrawerModel>(context, listen: false).add('1')
+                  },
+                  child: Column(
+                    children: const <Widget>[
+                      Text(
+                        "Add",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => {
+                    setGlobalCounter()
+                  },
+                  child: Column(
+                    children: const <Widget>[
+                      Text(
+                        "Increase",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            )
           ],
         )
       ],
@@ -755,6 +830,87 @@ class CustomPageRoute<T> extends PageRoute<T> {
     return FadeTransition(
       opacity: animation,
       child: child,
+    );
+  }
+}
+
+class MyButton extends StatefulWidget {
+  const MyButton({Key? key}) : super(key: key);
+
+  @override
+  _MyButtonState createState() => _MyButtonState();
+}
+
+class _MyButtonState extends State<MyButton> {
+  int _likes = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        TextButton(
+          onPressed: () => {
+            setState(() {
+              _likes += 1;
+            })
+          },
+          child: Column(
+            children: <Widget>[
+              Text(
+                "Clicked $_likes times",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
+                ),
+              )
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class ListOfBroadcasts extends StatelessWidget {
+  final VoidCallback setGlobalCounter;
+
+  const ListOfBroadcasts({Key? key, required this.setGlobalCounter}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<DrawerModel>(
+      builder: (context, myModel, child) {
+        return Column(
+          children: <Widget>[
+            for(var item in myModel._broadcasts) if(child != null) child,
+            if(myModel._broadcasts.isNotEmpty) Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                TextButton(
+                  onPressed: () => {
+                    myModel.removeAll()
+                  },
+                  child: Column(
+                    children: const <Widget>[
+                      Text(
+                        "Remove all broadcasts",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            )
+          ],
+        );
+      },
+      child: Broadcast(isButton: false, setGlobalCounter: setGlobalCounter),
     );
   }
 }
