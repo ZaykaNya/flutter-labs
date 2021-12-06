@@ -1,5 +1,4 @@
-import 'dart:html';
-
+// import 'dart:html';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
@@ -8,6 +7,153 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:math';
+
+var randomColor = Colors.primaries[Random().nextInt(Colors.primaries.length)];
+
+class AnimatedBarChart extends AnimatedWidget {
+  const AnimatedBarChart({Key? key, required Animation<double> animation})
+      : super(key: key, listenable: animation);
+
+  static final _opacityTween = Tween<double>(begin: 0.1, end: 1);
+  static final _sizeTween = Tween<double>(begin: 1, end: 300);
+  static final _colorTween =
+  ColorTween(begin: Colors.deepPurple, end: randomColor);
+
+  @override
+  Widget build(BuildContext context) {
+    final animation = listenable as Animation<double>;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: SizedBox(
+        height: 400,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Opacity(
+                  opacity: _opacityTween.evaluate(animation),
+                  child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 10),
+                      color: _colorTween.evaluate(animation),
+                      height: _sizeTween.evaluate(animation),
+                      width: _sizeTween.evaluate(animation),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+  }
+}
+
+class Insights extends StatefulWidget {
+  final String userName;
+
+  const Insights({Key? key, required this.userName}) : super(key: key);
+
+  @override
+  _InsightsState createState() => _InsightsState();
+}
+
+class _InsightsState extends State<Insights>
+    with SingleTickerProviderStateMixin {
+  late Animation<double> animation;
+  late AnimationController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller =
+        AnimationController(duration: const Duration(seconds: 10), vsync: this);
+    animation =
+    CurvedAnimation(parent: controller, curve: Curves.easeInOutCubic)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          controller.reverse();
+        } else if (status == AnimationStatus.dismissed) {
+          controller.forward();
+        }
+      });
+    controller.forward();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Animations')),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            AnimatedBarChart(animation: animation),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text('Go back'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+}
+
+class CreatePromotionScreen extends StatelessWidget {
+  const CreatePromotionScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Choose the option for promotion'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.blueGrey,
+                ),
+                onPressed: () {
+                  Navigator.pop(context, 'Promotion with post was created!');
+                },
+                child: const Text('Create promotion with post'),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.blueGrey,
+                ),
+                onPressed: () {
+                  Navigator.pop(context, 'Promotion with story was created!');
+                },
+                child: const Text('Create promotion with story'),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 Future<List<Map<String, dynamic>>> getData() async {
   final response = await http.get(Uri.parse(
@@ -47,12 +193,13 @@ class DrawerModel extends ChangeNotifier {
 }
 
 Future<void> main() async {
-  print('Fetching data...');
   print(await getData());
-  // print(await createOrderMessage());
-  // createOrderMessage().then((response) {
-  //   print('Data fetched with .then()');
-  // });
+  print('Fetching data with await...');
+  print(await createOrderMessage());
+  print('Fetching data with .then()...');
+  createOrderMessage().then((response) {
+    print('Data fetched with .then()');
+  });
 
   SharedPreferences.getInstance().then((sp) {
     runApp(
@@ -313,8 +460,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               icon: const Icon(Icons.video_camera_back)),
           IconButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('In development')));
+                Navigator.push(context, MaterialPageRoute<void>(
+                    builder: (context) => const Insights(userName: 'ZaykaNya')
+                ));
               },
               icon: const Icon(Icons.all_inbox)),
           IconButton(
