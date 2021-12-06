@@ -1,8 +1,36 @@
+import 'dart:html';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+Future<List<Map<String, dynamic>>> getData() async {
+  final response = await http.get(Uri.parse(
+      "https://raw.githubusercontent.com/ZaykaNya/flutter-labs/lab3/lib/data.json"));
+  print('response ${response.body}');
+
+  if (response.statusCode == 200) {
+    final list = (jsonDecode(response.body) as List);
+    return list.map((e) => e as Map<String, dynamic>).toList();
+  } else {
+    throw Exception('Failed to load');
+  }
+}
+
+Future<String> createOrderMessage() async {
+  var data = await fetchUserOrder();
+  return '$data';
+}
+
+Future<String> fetchUserOrder() => Future.delayed(
+  const Duration(seconds: 5),
+      () => 'Data fetched with await',
+);
 
 class DrawerModel extends ChangeNotifier {
   final _broadcasts = [];
@@ -18,19 +46,47 @@ class DrawerModel extends ChangeNotifier {
   }
 }
 
-void main() {
-  runApp(
-    ChangeNotifierProvider(
-      create: (context) => DrawerModel(),
-      child: const MyApp(),
-    ),
-  );
+Future<void> main() async {
+  print('Fetching data...');
+  print(await getData());
+  // print(await createOrderMessage());
+  // createOrderMessage().then((response) {
+  //   print('Data fetched with .then()');
+  // });
+
+  SharedPreferences.getInstance().then((sp) {
+    runApp(
+      ChangeNotifierProvider(
+        create: (context) => DrawerModel(),
+        child: MyApp(isDarkTheme: sp.getBool("isDarkTheme") ?? true),
+      ),
+    );
+  });
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class MyApp extends StatefulWidget {
+  final bool isDarkTheme;
 
-  // This widget is the root of your application.
+  const MyApp({Key? key, required this.isDarkTheme}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() => _MyAppState(isDarkTheme);
+}
+
+class _MyAppState extends State<MyApp> {
+  late bool isDarkTheme;
+
+  _MyAppState(this.isDarkTheme);// This widget is the root of your application.
+
+  void toggleTheme() {
+    setState(() {
+      isDarkTheme = !isDarkTheme;
+      SharedPreferences.getInstance().then((sp) {
+        sp.setBool('isDarkTheme', isDarkTheme);
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -38,7 +94,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '',
       routes: {
-        '': (context) => const MyHomePage(title: ''),
+        '': (context) => MyHomePage(title: '', toggleTheme: toggleTheme),
         '/game': (context) => const GamePage(
               tag: 'game',
               imagePath: 'images/Dota2',
@@ -55,8 +111,9 @@ class MyApp extends StatelessWidget {
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
         primarySwatch: Colors.blue,
-        canvasColor: Colors.black,
+        brightness: isDarkTheme ? Brightness.dark : Brightness.light,
       ),
+      themeMode: isDarkTheme ? ThemeMode.dark : ThemeMode.light,
     );
   }
 }
@@ -100,7 +157,9 @@ class GamePage extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+  final Function toggleTheme;
+
+  const MyHomePage({Key? key, required this.title, required this.toggleTheme}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -114,14 +173,17 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MyHomePage> createState() => _MyHomePageState(toggleTheme);
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   int _currentIndex = 0;
   int _globalCounter = 0;
+  final Function toggleTheme;
 
   final _inactiveColor = Colors.grey;
+
+  _MyHomePageState(this.toggleTheme);
 
   late ScrollController _scrollController;
   bool _showBackToTopButton = false;
@@ -161,7 +223,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Widget _buildBottomBar() {
     return CustomAnimatedBottomBar(
       containerHeight: 45,
-      backgroundColor: Colors.black,
       selectedIndex: _currentIndex,
       showElevation: true,
       itemCornerRadius: 24,
@@ -209,25 +270,27 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-      backgroundColor: Colors.black,
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(
-                color: Colors.black,
-              ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('TI-81 Andrii Demchyshyn', style: TextStyle(color: Colors.white)),
-                  Text('Global Counter: $_globalCounter', style: const TextStyle(color: Colors.white)),
+                  const Text('TI-81 Andrii Demchyshyn'),
+                  Text('Global Counter: $_globalCounter'),
                 ],
               ),
             ),
             ListOfBroadcasts(setGlobalCounter: setGlobalCounter),
             const MyButton(),
+            IconButton(
+              icon: const Icon(Icons.wb_sunny),
+              onPressed: () {
+                toggleTheme();
+              },
+            ),
           ],
         ),
       ),
@@ -241,7 +304,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
-        backgroundColor: Colors.black,
         actions: <Widget>[
           IconButton(
               onPressed: () {
@@ -256,9 +318,45 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               },
               icon: const Icon(Icons.all_inbox)),
           IconButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('In development')));
+              onPressed: () async {
+                var res = await Navigator.push(context, MaterialPageRoute<void>(
+                  builder: (BuildContext context) {
+                    return Scaffold(
+                      appBar: AppBar(
+                        title: const Text('Favorite'),
+                      ),
+                      body: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Empty here...',
+                              style: TextStyle(fontSize: 24),
+                            ),
+                            TextButton(
+                              onPressed: () => {
+                                Navigator.pop(context, 'Data from page')
+                              },
+                              child: Column(
+                                children: const <Widget>[
+                                  Text(
+                                    'Back',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
+                        )
+                      ),
+                    );
+                  },
+                ));
+                print(res as String);
               },
               icon: const Icon(Icons.favorite_border)),
           IconButton(
@@ -412,7 +510,7 @@ class NavButton extends StatelessWidget {
 
 class Broadcast extends StatelessWidget {
   final bool isButton;
-  final VoidCallback setGlobalCounter;
+  final setGlobalCounter;
 
   const Broadcast({
     Key? key,
@@ -860,7 +958,6 @@ class _MyButtonState extends State<MyButton> {
               Text(
                 "Clicked $_likes times",
                 style: const TextStyle(
-                  color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 10,
                 ),
@@ -874,7 +971,7 @@ class _MyButtonState extends State<MyButton> {
 }
 
 class ListOfBroadcasts extends StatelessWidget {
-  final VoidCallback setGlobalCounter;
+  final setGlobalCounter;
 
   const ListOfBroadcasts({Key? key, required this.setGlobalCounter}) : super(key: key);
 
