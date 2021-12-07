@@ -16,7 +16,8 @@ class AnimatedBarChart extends AnimatedWidget {
       : super(key: key, listenable: animation);
 
   static final _opacityTween = Tween<double>(begin: 0.1, end: 1);
-  static final _sizeTween = Tween<double>(begin: 1, end: 300);
+  static final _sizeTween = Tween<double>(begin: 1, end: 350);
+  static final _sizeTween2 = Tween<double>(begin: 1, end: 150);
   static final _colorTween =
   ColorTween(begin: Colors.deepPurple, end: randomColor);
 
@@ -38,7 +39,7 @@ class AnimatedBarChart extends AnimatedWidget {
                   child: Container(
                       margin: const EdgeInsets.symmetric(vertical: 10),
                       color: _colorTween.evaluate(animation),
-                      height: _sizeTween.evaluate(animation),
+                      height: _sizeTween2.evaluate(animation),
                       width: _sizeTween.evaluate(animation),
                     ),
                   ),
@@ -158,7 +159,6 @@ class CreatePromotionScreen extends StatelessWidget {
 Future<List<Map<String, dynamic>>> getData() async {
   final response = await http.get(Uri.parse(
       "https://raw.githubusercontent.com/ZaykaNya/flutter-labs/lab3/lib/data.json"));
-  print('response ${response.body}');
 
   if (response.statusCode == 200) {
     final list = (jsonDecode(response.body) as List);
@@ -168,12 +168,12 @@ Future<List<Map<String, dynamic>>> getData() async {
   }
 }
 
-Future<String> createOrderMessage() async {
-  var data = await fetchUserOrder();
+Future<String> getDataAwait() async {
+  var data = await fetchData();
   return '$data';
 }
 
-Future<String> fetchUserOrder() => Future.delayed(
+Future<String> fetchData() => Future.delayed(
   const Duration(seconds: 5),
       () => 'Data fetched with await',
 );
@@ -195,9 +195,9 @@ class DrawerModel extends ChangeNotifier {
 Future<void> main() async {
   print(await getData());
   print('Fetching data with await...');
-  print(await createOrderMessage());
+  print(await getDataAwait());
   print('Fetching data with .then()...');
-  createOrderMessage().then((response) {
+  getDataAwait().then((response) {
     print('Data fetched with .then()');
   });
 
