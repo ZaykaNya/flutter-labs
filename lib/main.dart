@@ -201,29 +201,31 @@ Future<void> main() async {
     print('Data fetched with .then()');
   });
 
-  SharedPreferences.getInstance().then((sp) {
     runApp(
       ChangeNotifierProvider(
         create: (context) => DrawerModel(),
-        child: MyApp(isDarkTheme: sp.getBool("isDarkTheme") ?? true),
+        child: MyApp(),
       ),
     );
-  });
 }
 
 class MyApp extends StatefulWidget {
-  final bool isDarkTheme;
-
-  const MyApp({Key? key, required this.isDarkTheme}) : super(key: key);
+  const MyApp({Key? key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => _MyAppState(isDarkTheme);
+  State<StatefulWidget> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  late bool isDarkTheme;
+  late bool isDarkTheme = true;
 
-  _MyAppState(this.isDarkTheme);// This widget is the root of your application.
+  _MyAppState() {
+    SharedPreferences.getInstance().then((sp) {
+      setState(() {
+        isDarkTheme = sp.getBool('isDarkTheme') ?? true;
+      });
+    });
+  }// This widget is the root of your application.
 
   void toggleTheme() {
     setState(() {
