@@ -112,50 +112,6 @@ class _InsightsState extends State<Insights>
   }
 }
 
-class CreatePromotionScreen extends StatelessWidget {
-  const CreatePromotionScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Choose the option for promotion'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.blueGrey,
-                ),
-                onPressed: () {
-                  Navigator.pop(context, 'Promotion with post was created!');
-                },
-                child: const Text('Create promotion with post'),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.blueGrey,
-                ),
-                onPressed: () {
-                  Navigator.pop(context, 'Promotion with story was created!');
-                },
-                child: const Text('Create promotion with story'),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 Future<List<Map<String, dynamic>>> getData() async {
   final response = await http.get(Uri.parse(
       "https://raw.githubusercontent.com/ZaykaNya/flutter-labs/lab3/lib/data.json"));
